@@ -19,3 +19,7 @@ def get_session():
     """Dependency for database session."""
     with Session(engine) as session:
         yield session
+
+
+# Alias for consistency with common naming conventions
+get_db = get_session
