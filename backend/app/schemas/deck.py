@@ -10,6 +10,10 @@ class DeckCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=200, description="Deck name")
     description: Optional[str] = Field(None, max_length=1000, description="Deck description")
     is_public: bool = Field(default=False, description="Whether deck is publicly visible")
+    school: Optional[str] = Field(None, max_length=200, description="School name")
+    course: Optional[str] = Field(None, max_length=200, description="Course name")
+    professor: Optional[str] = Field(None, max_length=200, description="Professor name")
+    year: Optional[int] = Field(None, ge=1900, le=2100, description="Academic year")
 
 
 class DeckUpdate(BaseModel):
@@ -17,6 +21,10 @@ class DeckUpdate(BaseModel):
     name: Optional[str] = Field(None, min_length=1, max_length=200, description="Deck name")
     description: Optional[str] = Field(None, max_length=1000, description="Deck description")
     is_public: Optional[bool] = Field(None, description="Whether deck is publicly visible")
+    school: Optional[str] = Field(None, max_length=200, description="School name")
+    course: Optional[str] = Field(None, max_length=200, description="Course name")
+    professor: Optional[str] = Field(None, max_length=200, description="Professor name")
+    year: Optional[int] = Field(None, ge=1900, le=2100, description="Academic year")
 
 
 class DeckResponse(BaseModel):
@@ -25,6 +33,10 @@ class DeckResponse(BaseModel):
     name: str = Field(..., description="Deck name")
     description: Optional[str] = Field(None, description="Deck description")
     is_public: bool = Field(..., description="Whether deck is publicly visible")
+    school: Optional[str] = Field(None, description="School name")
+    course: Optional[str] = Field(None, description="Course name")
+    professor: Optional[str] = Field(None, description="Professor name")
+    year: Optional[int] = Field(None, description="Academic year")
     created_at: datetime = Field(..., description="Creation timestamp")
     updated_at: datetime = Field(..., description="Last update timestamp")
     
