@@ -3,6 +3,10 @@ AI endpoints for chat, card rewriting, and autocomplete using Grok.
 
 These endpoints provide AI-powered features for legal flashcard creation
 and study assistance, with rate limiting to control usage.
+
+Security Note: All exception handling in this module has been designed to
+prevent stack trace exposure. Generic error messages are returned to users
+while detailed errors are logged for debugging.
 """
 
 from fastapi import APIRouter, HTTPException, Request
@@ -12,11 +16,15 @@ from typing import List, Dict, Optional
 from app.services.grok_service import GrokService
 from app.core.config import settings
 import json
+import logging
 
 router = APIRouter(prefix="/ai", tags=["ai"])
 
 # Initialize Grok service
 grok_service = GrokService()
+
+# Setup logging for internal debugging
+logger = logging.getLogger(__name__)
 
 
 class ChatMessage(BaseModel):
@@ -48,7 +56,11 @@ class AutocompleteCardRequest(BaseModel):
 
 async def event_generator(generator):
     """
-    Convert async generator to SSE format.
+    Convert async generator to SSE format with secure error handling.
+    
+    This function ensures that no internal error details or stack traces
+    are exposed to external users. All exceptions are caught and logged
+    internally while returning generic error messages to the client.
     
     Args:
         generator: Async generator yielding content chunks
@@ -62,7 +74,10 @@ async def event_generator(generator):
                 # Format as Server-Sent Event
                 yield f"data: {json.dumps({'content': chunk})}\n\n"
     except Exception as e:
-        yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        # Log internal error for debugging (not exposed to user)
+        logger.error(f"Error in event generator: {e}", exc_info=True)
+        # Return generic error message to user
+        yield f"data: {json.dumps({'error': 'An error occurred while processing your request'})}\n\n"
     finally:
         yield "data: [DONE]\n\n"
 
@@ -131,7 +146,10 @@ async def chat(request: ChatRequest, http_request: Request):
                 return {"content": full_response}
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"AI service error: {str(e)}")
+        # Log internal error for debugging (not exposed to user)
+        logger.error(f"Error in chat endpoint: {e}", exc_info=True)
+        # Don't expose internal error details to external users
+        raise HTTPException(status_code=500, detail="An error occurred while processing your request")
 
 
 @router.post("/rewrite-card")
@@ -175,7 +193,10 @@ async def rewrite_card(request: RewriteCardRequest, http_request: Request):
         )
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"AI service error: {str(e)}")
+        # Log internal error for debugging (not exposed to user)
+        logger.error(f"Error in rewrite-card endpoint: {e}", exc_info=True)
+        # Don't expose internal error details to external users
+        raise HTTPException(status_code=500, detail="An error occurred while processing your request")
 
 
 @router.post("/autocomplete-card")
@@ -220,7 +241,10 @@ async def autocomplete_card(request: AutocompleteCardRequest, http_request: Requ
         )
     
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"AI service error: {str(e)}")
+        # Log internal error for debugging (not exposed to user)
+        logger.error(f"Error in autocomplete-card endpoint: {e}", exc_info=True)
+        # Don't expose internal error details to external users
+        raise HTTPException(status_code=500, detail="An error occurred while processing your request")
 
 
 @router.get("/health")
