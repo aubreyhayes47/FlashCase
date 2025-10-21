@@ -2,13 +2,14 @@
 
 ## Overview
 
-The AI Legal Assistant uses xAI's Grok model with CourtListener legal database integration to provide AI-powered features for law students.
+The AI Legal Assistant uses xAI's **grok-4-fast** model with CourtListener legal database integration to provide AI-powered features for law students. The system includes comprehensive cost control mechanisms to keep the service free and sustainable.
 
 ## Features
 
 - **💬 Chat**: Ask legal questions with grounded answers
 - **✏️ Card Rewriting**: AI-powered flashcard improvement
 - **⚡ Autocomplete**: Smart suggestions while creating cards
+- **📊 Cost Control**: Built-in rate limiting, token tracking, and usage monitoring
 
 ## Setup
 
@@ -29,10 +30,17 @@ GROK_API_KEY=your_xai_api_key_here
 # Optional: CourtListener API Key (for better legal grounding)
 COURTLISTENER_API_KEY=your_courtlistener_api_key_here
 
+# Model Configuration (grok-4-fast optimized for cost)
+GROK_MODEL=grok-4-fast
+
 # Rate Limiting (optional, defaults shown)
 RATE_LIMIT_ENABLED=true
-RATE_LIMIT_PER_MINUTE=10
-RATE_LIMIT_PER_HOUR=100
+AI_RATE_LIMIT_PER_MINUTE=5
+AI_RATE_LIMIT_PER_HOUR=50
+
+# Token Usage Monitoring
+TOKEN_USAGE_TRACKING_ENABLED=true
+TOKEN_USAGE_ALERT_THRESHOLD=100000
 ```
 
 ### 3. Start the Server
@@ -56,7 +64,8 @@ All endpoints are prefixed with `/api/v1/ai/`
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/health` | GET | Check AI service status |
+| `/health` | GET | Check AI service status and configuration |
+| `/usage` | GET | Monitor token usage and costs |
 | `/chat` | POST | Conversational AI assistance |
 | `/rewrite-card` | POST | Improve flashcard content |
 | `/autocomplete-card` | POST | Get completion suggestions |
@@ -90,22 +99,32 @@ curl -X POST http://localhost:8000/api/v1/ai/rewrite-card \
 
 ## Rate Limits
 
-Default limits (configurable):
-- 10 requests per minute
-- 100 requests per hour
+AI endpoints have stricter limits for cost control:
+- **AI endpoints**: 5 requests/minute, 50 requests/hour
+- **Other endpoints**: 10 requests/minute, 100 requests/hour
+
+## Cost Control & Monitoring
+
+Monitor token usage and costs:
+```bash
+curl http://localhost:8000/api/v1/ai/usage
+```
+
+For detailed cost control information, see [COST_CONTROL.md](./COST_CONTROL.md)
 
 ## Documentation
 
-For comprehensive documentation, see [AI_INTEGRATION.md](./AI_INTEGRATION.md)
+- [COST_CONTROL.md](./COST_CONTROL.md) - Cost control and monitoring
+- [AI_INTEGRATION.md](./AI_INTEGRATION.md) - Comprehensive technical documentation
 
 ## Testing
 
 ```bash
-# Run unit tests
-pytest tests/test_ai.py -v
+# Run all AI tests
+pytest tests/test_ai.py tests/test_ai_cost_control.py -v
 
-# Run manual tests (requires running server)
-python3 test_ai_manual.py
+# Run only cost control tests
+pytest tests/test_ai_cost_control.py -v
 ```
 
 ## Troubleshooting
@@ -130,9 +149,13 @@ python3 test_ai_manual.py
 
 ## Cost Estimation
 
-With default rate limits (100 req/hour):
-- ~$5-10 per active user per month
-- Adjust rate limits based on budget
+With default rate limits (50 req/hour for AI):
+- **Model**: grok-4-fast (optimized for cost)
+- **Token limits**: 500-2000 per request (endpoint-specific)
+- **Estimated cost**: ~$5-10 per active user per month
+- **Monitoring**: Real-time token tracking via `/api/v1/ai/usage`
+
+See [COST_CONTROL.md](./COST_CONTROL.md) for detailed cost analysis.
 
 ---
 
