@@ -8,6 +8,7 @@ from app.models.card import Card
 from app.models.deck import Deck
 from app.models.user import User
 from app.schemas.card import CardCreate, CardUpdate, CardResponse
+from app.services.content_moderation import validate_card_content
 
 router = APIRouter(prefix="/cards", tags=["cards"])
 
@@ -56,7 +57,7 @@ async def create_card(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Create a new card in a deck.
+    Create a new card in a deck with content moderation.
     
     Args:
         card_data: Card creation data (deck_id, front, back)
@@ -68,6 +69,7 @@ async def create_card(
         
     Raises:
         HTTPException 404: If deck doesn't exist
+        HTTPException 400: If content contains inappropriate language
     """
     # Verify deck exists
     deck = session.get(Deck, card_data.deck_id)
@@ -75,6 +77,14 @@ async def create_card(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Deck not found"
+        )
+    
+    # Validate content for inappropriate language
+    is_valid, error_message = validate_card_content(card_data.front, card_data.back)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_message
         )
     
     card = Card(
@@ -96,7 +106,7 @@ async def update_card(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Update an existing card.
+    Update an existing card with content moderation.
     
     Args:
         card_id: Card ID to update
@@ -109,10 +119,23 @@ async def update_card(
         
     Raises:
         HTTPException 404: If card doesn't exist
+        HTTPException 400: If content contains inappropriate language
     """
     card = session.get(Card, card_id)
     if not card:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Card not found")
+    
+    # Build updated values for validation
+    updated_front = card_data.front if card_data.front is not None else card.front
+    updated_back = card_data.back if card_data.back is not None else card.back
+    
+    # Validate content for inappropriate language
+    is_valid, error_message = validate_card_content(updated_front, updated_back)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_message
+        )
     
     # Update only provided fields
     if card_data.front is not None:

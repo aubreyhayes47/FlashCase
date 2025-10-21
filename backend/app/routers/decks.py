@@ -7,6 +7,7 @@ from app.core.auth import get_current_active_user
 from app.models.deck import Deck
 from app.models.user import User
 from app.schemas.deck import DeckCreate, DeckUpdate, DeckResponse
+from app.services.content_moderation import validate_deck_content
 
 router = APIRouter(prefix="/decks", tags=["decks"])
 
@@ -61,7 +62,15 @@ async def create_deck(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Create a new deck."""
+    """Create a new deck with content moderation."""
+    # Validate content for inappropriate language
+    is_valid, error_message = validate_deck_content(deck_data.name, deck_data.description)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_message
+        )
+    
     deck = Deck(
         name=deck_data.name,
         description=deck_data.description,
@@ -84,10 +93,22 @@ async def update_deck(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_active_user)
 ):
-    """Update an existing deck."""
+    """Update an existing deck with content moderation."""
     deck = session.get(Deck, deck_id)
     if not deck:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Deck not found")
+    
+    # Build updated values for validation
+    updated_name = deck_data.name if deck_data.name is not None else deck.name
+    updated_description = deck_data.description if deck_data.description is not None else deck.description
+    
+    # Validate content for inappropriate language
+    is_valid, error_message = validate_deck_content(updated_name, updated_description)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=error_message
+        )
     
     # Update only provided fields
     if deck_data.name is not None:
