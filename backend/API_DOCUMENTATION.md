@@ -618,3 +618,184 @@ pytest tests/ -v
 **Last Updated**: October 21, 2025
 **API Version**: 1
 **Status**: Production Ready
+
+## Content Moderation & Reporting
+
+### Overview
+
+FlashCase includes automated content moderation and user reporting features to maintain a safe learning environment.
+
+**Features**:
+- Automated profanity filtering on all user-generated content
+- User reporting system for inappropriate content
+- Admin review and management of reports
+
+**See also**: [CONTENT_MODERATION.md](./CONTENT_MODERATION.md) for detailed documentation.
+
+### Create Report
+
+Submit a report for inappropriate content.
+
+```http
+POST /api/v1/reports/
+Authorization: Bearer {token}
+Content-Type: application/json
+
+{
+  "report_type": "deck",
+  "content_id": 123,
+  "reason": "inappropriate",
+  "description": "This deck contains offensive content"
+}
+```
+
+**Request Body**:
+- `report_type` (required): "deck" or "card"
+- `content_id` (required): ID of the content being reported
+- `reason` (required): "inappropriate", "spam", "copyright", "misleading", or "other"
+- `description` (optional): Additional details (max 500 characters)
+
+**Response** (201 Created):
+```json
+{
+  "id": 1,
+  "reporter_id": 42,
+  "report_type": "deck",
+  "content_id": 123,
+  "reason": "inappropriate",
+  "description": "This deck contains offensive content",
+  "status": "pending",
+  "reviewed_by": null,
+  "admin_notes": null,
+  "created_at": "2025-10-21T12:00:00",
+  "updated_at": "2025-10-21T12:00:00"
+}
+```
+
+### Get My Reports
+
+Retrieve reports submitted by the current user.
+
+```http
+GET /api/v1/reports/my-reports
+Authorization: Bearer {token}
+```
+
+**Response** (200 OK):
+```json
+[
+  {
+    "id": 1,
+    "reporter_id": 42,
+    "report_type": "deck",
+    "content_id": 123,
+    "reason": "inappropriate",
+    "description": "This deck contains offensive content",
+    "status": "pending",
+    "reviewed_by": null,
+    "admin_notes": null,
+    "created_at": "2025-10-21T12:00:00",
+    "updated_at": "2025-10-21T12:00:00"
+  }
+]
+```
+
+### List All Reports (Admin Only)
+
+List all reports with optional filtering.
+
+```http
+GET /api/v1/reports/?status_filter=pending&report_type=deck
+Authorization: Bearer {admin_token}
+```
+
+**Query Parameters**:
+- `status_filter` (optional): Filter by status ("pending", "reviewed", "resolved", "dismissed")
+- `report_type` (optional): Filter by type ("deck", "card")
+
+**Response** (200 OK): Array of report objects
+**Error** (403 Forbidden): If user is not an admin
+
+### Get Report Details (Admin Only)
+
+Get details of a specific report.
+
+```http
+GET /api/v1/reports/{report_id}
+Authorization: Bearer {admin_token}
+```
+
+**Response** (200 OK): Report object
+**Error** (403 Forbidden): If user is not an admin
+**Error** (404 Not Found): If report doesn't exist
+
+### Update Report Status (Admin Only)
+
+Update report status and add admin notes.
+
+```http
+PUT /api/v1/reports/{report_id}
+Authorization: Bearer {admin_token}
+Content-Type: application/json
+
+{
+  "status": "resolved",
+  "admin_notes": "Content removed and user warned"
+}
+```
+
+**Request Body**:
+- `status` (required): New status ("pending", "reviewed", "resolved", "dismissed")
+- `admin_notes` (optional): Admin notes (max 1000 characters)
+
+**Response** (200 OK): Updated report object
+**Error** (403 Forbidden): If user is not an admin
+
+### Delete Report (Admin Only)
+
+Delete a report.
+
+```http
+DELETE /api/v1/reports/{report_id}
+Authorization: Bearer {admin_token}
+```
+
+**Response** (204 No Content): Success
+**Error** (403 Forbidden): If user is not an admin
+**Error** (404 Not Found): If report doesn't exist
+
+### Content Moderation
+
+All content creation and update endpoints automatically validate content for inappropriate language:
+
+**Protected Endpoints**:
+- `POST /api/v1/decks/` - Create deck
+- `PUT /api/v1/decks/{deck_id}` - Update deck
+- `POST /api/v1/cards/` - Create card
+- `PUT /api/v1/cards/{card_id}` - Update card
+
+**Validation**:
+Content is checked for profanity in:
+- Deck names and descriptions
+- Card front and back text
+
+**Error Response** (400 Bad Request):
+```json
+{
+  "detail": "Deck name: Content contains inappropriate language"
+}
+```
+
+### Legal & AI Disclaimers
+
+All frontend pages display appropriate disclaimers:
+
+**Legal Disclaimer** (All pages):
+> ⚖️ Not Legal Advice: FlashCase is an educational tool designed to help law students study. The content provided through this platform does not constitute legal advice and should not be relied upon for legal decisions. Always consult with a qualified attorney for specific legal matters.
+
+**AI Disclaimer** (Create page):
+> 🤖 AI-Generated Content: This platform uses artificial intelligence to assist with content generation. AI-generated content may contain errors, inaccuracies, or outdated information. Always verify important information with authoritative sources and use AI features as a study aid, not as a definitive legal resource.
+
+---
+
+**Last Updated**: October 21, 2025
