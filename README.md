@@ -303,11 +303,112 @@ cd frontend
 npm test
 ```
 
+### Smoke Tests
+
+After deployment, run smoke tests to verify functionality:
+
+```bash
+./smoke_tests.sh
+# Or specify custom URLs:
+BACKEND_URL=https://api.flashcase.com FRONTEND_URL=https://flashcase.com ./smoke_tests.sh
+```
+
+## CI/CD Pipeline
+
+FlashCase includes automated CI/CD workflows using GitHub Actions:
+
+- **Backend CI**: Runs tests on every push to backend code
+- **Frontend CI**: Builds and type-checks frontend on every push
+- **Docker Build**: Tests Docker builds and docker-compose setup
+- **Deploy**: Template for deployment to various platforms
+
+Workflows automatically run on:
+- Push to `main` or `develop` branches
+- Pull requests to `main` or `develop`
+
+See `.github/workflows/` for workflow configurations.
+
 ## Deployment
 
-Both services are containerized and can be deployed to any container orchestration platform (Kubernetes, ECS, etc.) or PaaS (Heroku, Railway, Vercel + separate API hosting).
+FlashCase supports deployment to multiple platforms. See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed guides.
 
-The docker-compose configuration provides local development parity with production.
+### Quick Deploy Options
+
+**Render (Easiest, Free Tier Available)**
+- Connect GitHub repository
+- Auto-deploy on push
+- Managed PostgreSQL included
+- Free SSL certificates
+
+**Heroku (Simple PaaS)**
+- Git-based deployment
+- Rich addon ecosystem
+- Easy scaling
+
+**AWS (Production Scale)**
+- ECS with Fargate
+- Full control and scaling
+- Integrates with AWS ecosystem
+
+**GCP Cloud Run (Cost-Effective)**
+- Serverless containers
+- Auto-scaling (to zero)
+- Pay-per-use pricing
+
+### Deployment Documentation
+
+- 📘 [Full Deployment Guide](DEPLOYMENT.md) - Platform-specific instructions
+- 📊 [Monitoring Guide](MONITORING.md) - Set up monitoring and logging
+- 💰 [Cost Control](backend/COST_CONTROL.md) - AI token usage and cost tracking
+
+### Key Environment Variables
+
+For production deployment, configure:
+
+```bash
+# Required
+SECRET_KEY=<generate-strong-random-key>
+DATABASE_URL=<your-database-url>
+GROK_API_KEY=<your-xai-api-key>
+CORS_ORIGINS=["https://your-frontend-url.com"]
+
+# Recommended
+ENVIRONMENT=production
+LOG_LEVEL=INFO
+RATE_LIMIT_ENABLED=true
+TOKEN_USAGE_TRACKING_ENABLED=true
+```
+
+## Monitoring & Observability
+
+### AI Token Usage Monitoring
+
+FlashCase includes real-time AI token usage tracking:
+
+```bash
+# View current usage
+curl http://localhost:8000/api/v1/ai/usage
+
+# Monitor continuously
+cd backend
+python monitor_token_usage.py
+```
+
+### Structured Logging
+
+Production-ready JSON logging is configured automatically:
+
+- Development: Colored, human-readable logs
+- Production: JSON-formatted structured logs
+- Includes request tracking, AI metrics, and performance data
+
+See [MONITORING.md](MONITORING.md) for complete monitoring setup.
+
+### Health Checks
+
+- Backend: `GET /api/v1/health`
+- AI Service: `GET /api/v1/ai/health`
+- Token Usage: `GET /api/v1/ai/usage`
 
 ## Contributing
 

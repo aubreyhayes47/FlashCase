@@ -1,0 +1,114 @@
+name: Deploy to Production
+
+# This workflow is a template for deploying to various platforms
+# Uncomment and configure the appropriate sections based on your chosen platform
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  # Deployment job - configure based on chosen platform
+  deploy:
+    runs-on: ubuntu-latest
+    # Only deploy on main branch or tags
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: read
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up deployment environment
+      run: |
+        echo "Deployment configured for platform: TBD"
+        echo "Uncomment and configure the appropriate deployment section below"
+    
+    # ============================================================================
+    # RENDER DEPLOYMENT
+    # ============================================================================
+    # - name: Deploy to Render
+    #   run: |
+    #     curl -X POST "https://api.render.com/deploy/${{ secrets.RENDER_SERVICE_ID }}?key=${{ secrets.RENDER_API_KEY }}"
+    
+    # ============================================================================
+    # HEROKU DEPLOYMENT
+    # ============================================================================
+    # - name: Deploy to Heroku
+    #   uses: akhileshns/heroku-deploy@v3.13.15
+    #   with:
+    #     heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+    #     heroku_app_name: flashcase-backend
+    #     heroku_email: ${{ secrets.HEROKU_EMAIL }}
+    #     appdir: backend
+    
+    # ============================================================================
+    # AWS ECS DEPLOYMENT
+    # ============================================================================
+    # - name: Configure AWS credentials
+    #   uses: aws-actions/configure-aws-credentials@v4
+    #   with:
+    #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    #     aws-region: us-east-1
+    #
+    # - name: Login to Amazon ECR
+    #   id: login-ecr
+    #   uses: aws-actions/amazon-ecr-login@v2
+    #
+    # - name: Build and push backend to ECR
+    #   env:
+    #     ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+    #     ECR_REPOSITORY: flashcase-backend
+    #     IMAGE_TAG: ${{ github.sha }}
+    #   run: |
+    #     docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG ./backend
+    #     docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+    #
+    # - name: Deploy to ECS
+    #   run: |
+    #     aws ecs update-service --cluster flashcase --service backend --force-new-deployment
+    
+    # ============================================================================
+    # GCP CLOUD RUN DEPLOYMENT
+    # ============================================================================
+    # - name: Authenticate to Google Cloud
+    #   uses: google-github-actions/auth@v2
+    #   with:
+    #     credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+    #
+    # - name: Set up Cloud SDK
+    #   uses: google-github-actions/setup-gcloud@v2
+    #
+    # - name: Build and push to GCR
+    #   run: |
+    #     gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/flashcase-backend ./backend
+    #
+    # - name: Deploy to Cloud Run
+    #   run: |
+    #     gcloud run deploy flashcase-backend \
+    #       --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/flashcase-backend \
+    #       --platform managed \
+    #       --region us-central1 \
+    #       --allow-unauthenticated
+
+  # Smoke tests after deployment
+  smoke-test:
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: read
+    
+    steps:
+    - name: Run smoke tests
+      run: |
+        echo "Running smoke tests..."
+        # Add your smoke test commands here
+        # Example:
+        # curl -f https://your-backend-url.com/api/v1/health
+        # curl -f https://your-frontend-url.com

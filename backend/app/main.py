@@ -2,8 +2,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import create_db_and_tables
+from app.core.logging_config import setup_logging, get_logger
 from app.routers import decks, cards, health, ai, study, auth, reports
 from app.middleware import setup_rate_limiting
+
+# Setup logging
+environment = getattr(settings, 'environment', 'development')
+log_level = getattr(settings, 'log_level', 'INFO')
+setup_logging(environment=environment, log_level=log_level)
+
+logger = get_logger(__name__)
 
 app = FastAPI(title=settings.project_name)
 
@@ -32,7 +40,9 @@ app.include_router(reports.router, prefix=settings.api_v1_prefix)
 @app.on_event("startup")
 def on_startup():
     """Initialize database on startup."""
+    logger.info("Starting FlashCase API", extra={"version": "1.0.0", "environment": environment})
     create_db_and_tables()
+    logger.info("Database initialized successfully")
 
 
 @app.get("/")

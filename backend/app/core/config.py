@@ -49,6 +49,10 @@ class Settings(BaseSettings):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
     
+    # Logging
+    environment: str = "development"  # development, production, staging
+    log_level: str = "INFO"  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+    
     class Config:
         env_file = ".env"
         case_sensitive = False
