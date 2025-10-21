@@ -105,13 +105,26 @@ class GrokService:
     
     This service provides methods for chat completion, card generation, and
     AI-assisted content creation, all grounded in legal sources via CourtListener.
+    
+    Includes token usage tracking for cost monitoring and control.
     """
+    
+    # Class-level token usage tracking
+    _token_usage = {
+        "total_prompt_tokens": 0,
+        "total_completion_tokens": 0,
+        "total_tokens": 0,
+        "total_requests": 0
+    }
     
     def __init__(self):
         """Initialize the Grok service with API configuration."""
         self.api_key = settings.grok_api_key
         self.api_base_url = settings.grok_api_base_url
         self.model = settings.grok_model
+        
+        # Initialize per-instance tracking
+        self.request_token_count = 0
         
         # Define the CourtListener search tool schema
         self.tools = [
@@ -147,6 +160,50 @@ class GrokService:
             }
         ]
     
+    def _track_token_usage(self, usage_data: Dict[str, Any]) -> None:
+        """
+        Track token usage from API responses for monitoring and cost control.
+        
+        Args:
+            usage_data: Usage data from API response containing token counts
+        """
+        if not settings.token_usage_tracking_enabled:
+            return
+        
+        if usage_data:
+            prompt_tokens = usage_data.get("prompt_tokens", 0)
+            completion_tokens = usage_data.get("completion_tokens", 0)
+            total_tokens = usage_data.get("total_tokens", 0)
+            
+            # Update class-level tracking
+            GrokService._token_usage["total_prompt_tokens"] += prompt_tokens
+            GrokService._token_usage["total_completion_tokens"] += completion_tokens
+            GrokService._token_usage["total_tokens"] += total_tokens
+            GrokService._token_usage["total_requests"] += 1
+            
+            # Update instance tracking
+            self.request_token_count += total_tokens
+    
+    @classmethod
+    def get_token_usage_stats(cls) -> Dict[str, Any]:
+        """
+        Get current token usage statistics for monitoring.
+        
+        Returns:
+            Dictionary containing token usage statistics
+        """
+        return cls._token_usage.copy()
+    
+    @classmethod
+    def reset_token_usage_stats(cls) -> None:
+        """Reset token usage statistics (useful for testing or periodic resets)."""
+        cls._token_usage = {
+            "total_prompt_tokens": 0,
+            "total_completion_tokens": 0,
+            "total_tokens": 0,
+            "total_requests": 0
+        }
+    
     async def _call_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """
         Execute a tool call by name with provided arguments.
@@ -167,8 +224,8 @@ class GrokService:
         self,
         messages: List[Dict[str, str]],
         stream: bool = False,
-        temperature: float = 0.7,
-        max_tokens: int = 2000
+        temperature: float = None,
+        max_tokens: int = None
     ) -> AsyncGenerator[str, None]:
         """
         Send chat completion request to Grok with tool calling support.
@@ -176,8 +233,8 @@ class GrokService:
         Args:
             messages: List of message dictionaries with 'role' and 'content'
             stream: Whether to stream the response
-            temperature: Sampling temperature (0.0 to 2.0)
-            max_tokens: Maximum tokens in response
+            temperature: Sampling temperature (0.0 to 2.0), defaults to cost-controlled value
+            max_tokens: Maximum tokens in response, defaults to cost-controlled value
         
         Yields:
             Response chunks as they arrive (if streaming)
@@ -186,6 +243,12 @@ class GrokService:
         if not self.api_key:
             yield json.dumps({"error": "Grok API key not configured"})
             return
+        
+        # Use cost-controlled defaults if not specified
+        if temperature is None:
+            temperature = settings.grok_default_temperature
+        if max_tokens is None:
+            max_tokens = settings.grok_chat_max_tokens
         
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -276,6 +339,10 @@ class GrokService:
                     response.raise_for_status()
                     data = response.json()
                     
+                    # Track token usage
+                    if data.get("usage"):
+                        self._track_token_usage(data["usage"])
+                    
                     # Handle tool calls in non-streaming mode
                     if data.get("choices", [{}])[0].get("message", {}).get("tool_calls"):
                         tool_calls = data["choices"][0]["message"]["tool_calls"]
@@ -359,7 +426,13 @@ Provide your response in JSON format:
             {"role": "user", "content": prompt}
         ]
         
-        async for chunk in self.chat_completion(messages, stream=True, temperature=0.5):
+        # Use cost-controlled defaults for rewriting (lower temperature for consistency, fewer tokens)
+        async for chunk in self.chat_completion(
+            messages, 
+            stream=True, 
+            temperature=0.5,
+            max_tokens=settings.grok_rewrite_max_tokens
+        ):
             yield chunk
     
     async def autocomplete_card(
@@ -405,5 +478,11 @@ Format your response as JSON:
             {"role": "user", "content": prompt}
         ]
         
-        async for chunk in self.chat_completion(messages, stream=True, temperature=0.3):
+        # Use cost-controlled defaults for autocomplete (low temperature, minimal tokens)
+        async for chunk in self.chat_completion(
+            messages, 
+            stream=True, 
+            temperature=0.3,
+            max_tokens=settings.grok_autocomplete_max_tokens
+        ):
             yield chunk
