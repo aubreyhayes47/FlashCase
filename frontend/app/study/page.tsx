@@ -95,7 +95,17 @@ export default function Study() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-8">Study Session</h1>
+        <h1 className="text-4xl font-bold mb-4">Study Session</h1>
+        
+        {/* Legal Disclaimer */}
+        <div className="max-w-2xl mx-auto mb-8">
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 text-sm">
+            <p className="text-yellow-800">
+              <strong>⚖️ Not Legal Advice:</strong> FlashCase is an educational tool. Content does not constitute legal advice. 
+              Always consult with a qualified attorney for specific legal matters.
+            </p>
+          </div>
+        </div>
 
         <div className="max-w-2xl mx-auto">
           {/* Card Display Area */}

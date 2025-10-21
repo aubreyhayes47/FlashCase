@@ -74,8 +74,21 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t py-8">
-        <div className="container mx-auto px-4 text-center text-gray-600">
-          <p>FlashCase - Modern flashcard app for law students</p>
+        <div className="container mx-auto px-4">
+          {/* Legal Disclaimer */}
+          <div className="max-w-4xl mx-auto mb-6">
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 text-sm">
+              <p className="text-yellow-800">
+                <strong>⚖️ Not Legal Advice:</strong> FlashCase is an educational tool designed to help law students study. 
+                The content provided through this platform does not constitute legal advice and should not be relied upon 
+                for legal decisions. Always consult with a qualified attorney for specific legal matters.
+              </p>
+            </div>
+          </div>
+          
+          <div className="text-center text-gray-600">
+            <p>FlashCase - Modern flashcard app for law students</p>
+          </div>
         </div>
       </footer>
     </div>
