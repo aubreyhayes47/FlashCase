@@ -1,6 +1,81 @@
+'use client';
+
 import Link from "next/link";
+import { useState, useEffect } from "react";
+
+interface Card {
+  id: number;
+  deck_id: number;
+  front: string;
+  back: string;
+  ease_factor: number;
+  interval: number;
+  repetitions: number;
+  due_date: string;
+}
 
 export default function Study() {
+  const [cards, setCards] = useState<Card[]>([]);
+  const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [showAnswer, setShowAnswer] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const currentCard = cards[currentCardIndex];
+  const remainingCards = cards.length - currentCardIndex;
+
+  // Keyboard shortcuts handler
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (!currentCard) return;
+
+      // Space to show answer
+      if (e.code === 'Space' && !showAnswer) {
+        e.preventDefault();
+        setShowAnswer(true);
+      }
+      
+      // Number keys for rating (only when answer is shown)
+      if (showAnswer) {
+        if (e.key === '1') handleRating(0); // Again
+        else if (e.key === '2') handleRating(2); // Hard
+        else if (e.key === '3') handleRating(3); // Good
+        else if (e.key === '4') handleRating(5); // Easy
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [currentCard, showAnswer]);
+
+  const handleRating = async (quality: number) => {
+    if (!currentCard || loading) return;
+    
+    setLoading(true);
+    
+    try {
+      // In a real implementation, this would call the backend API
+      // const response = await fetch(`/api/v1/study/review/${currentCard.id}`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ quality })
+      // });
+      
+      // Move to next card
+      if (currentCardIndex < cards.length - 1) {
+        setCurrentCardIndex(currentCardIndex + 1);
+        setShowAnswer(false);
+      } else {
+        // Session complete
+        setCards([]);
+        setCurrentCardIndex(0);
+      }
+    } catch (error) {
+      console.error('Failed to submit rating:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen">
       <header className="border-b">
@@ -24,44 +99,78 @@ export default function Study() {
 
         <div className="max-w-2xl mx-auto">
           {/* Card Display Area */}
-          <div className="border rounded-lg p-12 mb-6 min-h-[400px] flex items-center justify-center">
-            <div className="text-center text-gray-500">
-              <p className="text-xl mb-4">No cards to review right now</p>
-              <p>Create a deck or import cards to start studying</p>
-            </div>
+          <div className="border rounded-lg p-12 mb-6 min-h-[400px] flex items-center justify-center bg-white shadow-lg">
+            {currentCard ? (
+              <div className="text-center w-full">
+                <div className="text-sm text-gray-500 mb-4">
+                  {showAnswer ? 'Answer:' : 'Question:'}
+                </div>
+                <div className="text-2xl mb-8">
+                  {showAnswer ? currentCard.back : currentCard.front}
+                </div>
+                {!showAnswer && (
+                  <button
+                    onClick={() => setShowAnswer(true)}
+                    className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                  >
+                    Show Answer (Space)
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="text-center text-gray-500">
+                <p className="text-xl mb-4">No cards to review right now</p>
+                <p>Create a deck or import cards to start studying</p>
+              </div>
+            )}
           </div>
 
           {/* Study Controls */}
-          <div className="flex justify-between items-center">
+          <div className="flex justify-between items-center mb-4">
             <div className="text-gray-600">
-              <span className="font-semibold">0</span> cards remaining
+              <span className="font-semibold">{remainingCards}</span> cards remaining
             </div>
-            <div className="space-x-2">
-              <button 
-                className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300"
-                disabled
-              >
-                Again
-              </button>
-              <button 
-                className="px-6 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:bg-gray-300"
-                disabled
-              >
-                Hard
-              </button>
-              <button 
-                className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300"
-                disabled
-              >
-                Good
-              </button>
-              <button 
-                className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300"
-                disabled
-              >
-                Easy
-              </button>
-            </div>
+            {showAnswer && currentCard && (
+              <div className="space-x-2">
+                <button 
+                  onClick={() => handleRating(0)}
+                  disabled={loading}
+                  className="px-6 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:bg-gray-300 transition"
+                  title="Again (1)"
+                >
+                  Again
+                </button>
+                <button 
+                  onClick={() => handleRating(2)}
+                  disabled={loading}
+                  className="px-6 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 disabled:bg-gray-300 transition"
+                  title="Hard (2)"
+                >
+                  Hard
+                </button>
+                <button 
+                  onClick={() => handleRating(3)}
+                  disabled={loading}
+                  className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:bg-gray-300 transition"
+                  title="Good (3)"
+                >
+                  Good
+                </button>
+                <button 
+                  onClick={() => handleRating(5)}
+                  disabled={loading}
+                  className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 transition"
+                  title="Easy (4)"
+                >
+                  Easy
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Keyboard Shortcuts Help */}
+          <div className="text-center text-sm text-gray-500 mb-6">
+            Keyboard shortcuts: Space (show answer), 1 (again), 2 (hard), 3 (good), 4 (easy)
           </div>
 
           {/* Study Stats */}
@@ -71,7 +180,7 @@ export default function Study() {
               <div className="text-sm text-gray-600">New</div>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
-              <div className="text-2xl font-bold">0</div>
+              <div className="text-2xl font-bold">{cards.length}</div>
               <div className="text-sm text-gray-600">Learning</div>
             </div>
             <div className="p-4 bg-gray-50 rounded-lg">
