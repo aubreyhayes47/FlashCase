@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import create_db_and_tables
-from app.routers import decks, cards, health
+from app.routers import decks, cards, health, study
 
 app = FastAPI(title=settings.project_name)
 
@@ -19,6 +19,7 @@ app.add_middleware(
 app.include_router(health.router, prefix=settings.api_v1_prefix)
 app.include_router(decks.router, prefix=settings.api_v1_prefix)
 app.include_router(cards.router, prefix=settings.api_v1_prefix)
+app.include_router(study.router, prefix=settings.api_v1_prefix)
 
 
 @app.on_event("startup")
