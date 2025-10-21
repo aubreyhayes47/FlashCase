@@ -15,39 +15,40 @@ FlashCase uses SQLite for development with a path to migrate to PostgreSQL for p
 │ id          │◄──────│ user_id (FK) │──────►│ id          │
 │ email       │       │ deck_id (FK) │       │ name        │
 │ username    │       │ is_owner     │       │ description │
-│ ...         │       │ is_favorite  │       │ is_public   │
-└─────────────┘       │ added_at     │       │ ...         │
-       │              └──────────────┘       └─────────────┘
+│ is_admin    │       │ is_favorite  │       │ is_public   │
+│ ...         │       │ added_at     │       │ ...         │
+└─────────────┘       └──────────────┘       └─────────────┘
        │              (unique: user_id,               │
        │               deck_id)                       │
        │                                              │
        │              ┌──────────────┐                │
        │              │  StudyLog    │                │
        │              ├──────────────┤                │
-       └─────────────►│ user_id (FK) │                │
-                      │ card_id (FK) │                │
-                      │ reviewed_at  │                │
-                      │ ease_factor  │                │
-                      │ interval     │       ┌─────────────┐
-                      │ next_review  │       │    Card     │
-                      └──────────────┘       ├─────────────┤
-                               ▲             │ id          │
-                               └─────────────│ deck_id (FK)│
-                                             │ front       │
-                                             │ back        │
-                                             └─────────────┘
-                                                    │
-                                    ┌───────────────┘
-                                    │
-                              ┌──────────────┐
-                              │DeckMetadata  │
-                              ├──────────────┤
-                              │ deck_id (FK) │
-                              │ card_count   │
-                              │ total_reviews│
-                              │ avg_rating   │
-                              │ last_studied │
-                              └──────────────┘
+       ├─────────────►│ user_id (FK) │                │
+       │              │ card_id (FK) │                │
+       │              │ reviewed_at  │                │
+       │              │ ease_factor  │                │
+       │              │ interval     │       ┌─────────────┐
+       │              │ next_review  │       │    Card     │
+       │              └──────────────┘       ├─────────────┤
+       │                       ▲             │ id          │
+       │                       └─────────────│ deck_id (FK)│
+       │                                     │ front       │
+       │              ┌──────────────┐       │ back        │
+       │              │   Report     │       └─────────────┘
+       │              ├──────────────┤              │
+       ├─────────────►│reporter_id(FK)              │
+       │              │ reviewed_by(FK)      ┌──────────────┐
+       └──────────────┤ report_type  │      │DeckMetadata  │
+                      │ content_id   │      ├──────────────┤
+                      │ status       │      │ deck_id (FK) │◄──┐
+                      │ reason       │      │ card_count   │   │
+                      └──────────────┘      │ total_reviews│   │
+                                            │ avg_rating   │   │
+                                            │ last_studied │   │
+                                            └──────────────┘   │
+                                                   │           │
+                                                   └───────────┘
 ```
 
 ## Models
@@ -65,6 +66,7 @@ Stores user authentication and account information.
 | username         | VARCHAR  | NOT NULL, UNIQUE, INDEX        | User's display name              |
 | hashed_password  | VARCHAR  | NOT NULL                       | Bcrypt hashed password           |
 | is_active        | BOOLEAN  | NOT NULL, DEFAULT TRUE         | Account active status            |
+| is_admin         | BOOLEAN  | NOT NULL, DEFAULT FALSE        | Admin user flag                  |
 | created_at       | DATETIME | NOT NULL, DEFAULT CURRENT_TIME | Account creation timestamp       |
 | updated_at       | DATETIME | NOT NULL, DEFAULT CURRENT_TIME | Last update timestamp            |
 
@@ -229,6 +231,52 @@ Many-to-many relationship between users and decks.
 - `is_owner=True` indicates the user created the deck
 - Multiple users can own the same deck (collaborative decks)
 - `is_favorite` allows users to bookmark decks for quick access
+
+---
+
+### Report
+
+Content moderation reports submitted by users.
+
+**Table:** `report`
+
+| Column       | Type     | Constraints                    | Description                      |
+|--------------|----------|--------------------------------|----------------------------------|
+| id           | INTEGER  | PRIMARY KEY                    | Auto-incrementing report ID      |
+| reporter_id  | INTEGER  | NOT NULL, FK(user.id), INDEX   | User who created the report      |
+| report_type  | VARCHAR  | NOT NULL                       | Type: "deck" or "card"           |
+| content_id   | INTEGER  | NOT NULL, INDEX                | ID of reported deck or card      |
+| reason       | VARCHAR  | NOT NULL                       | Report reason category           |
+| description  | VARCHAR  | NULL                           | Optional additional details      |
+| status       | VARCHAR  | NOT NULL, DEFAULT "pending"    | Status: pending/reviewed/etc     |
+| reviewed_by  | INTEGER  | NULL, FK(user.id)              | Admin who reviewed               |
+| admin_notes  | VARCHAR  | NULL                           | Admin review notes               |
+| created_at   | DATETIME | NOT NULL, DEFAULT CURRENT_TIME | Report creation timestamp        |
+| updated_at   | DATETIME | NOT NULL, DEFAULT CURRENT_TIME | Last update timestamp            |
+
+**Relationships:**
+- Many-to-one with `User` via `reporter_id` (user creates reports)
+- Many-to-one with `User` via `reviewed_by` (admin reviews reports)
+
+**Foreign Keys:**
+- `reporter_id` → `user.id`
+- `reviewed_by` → `user.id` (nullable)
+
+**Indexes:**
+- `ix_report_reporter_id`
+- `ix_report_content_id`
+- `ix_report_status`
+
+**Valid Values:**
+- `report_type`: "deck", "card"
+- `reason`: "inappropriate", "spam", "copyright", "misleading", "other"
+- `status`: "pending", "reviewed", "resolved", "dismissed"
+
+**Notes:**
+- Reports allow users to flag inappropriate content
+- Admin users can review and update report status
+- `reviewed_by` tracks which admin handled the report
+- `content_id` references the deck or card being reported (not a foreign key to allow flexibility)
 
 ---
 

@@ -352,4 +352,6 @@ Together, we're building a tool that will help thousands of law students master 
 
 ---
 
-*Last updated: October 2025*
+---
+
+**Last Updated**: October 21, 2025

@@ -528,6 +528,7 @@ Document response procedures:
 
 ---
 
+---
+
 **Last Updated**: October 21, 2025  
-**Version**: 1.0  
-**Maintainer**: FlashCase DevOps Team
+**Version**: 1.0
