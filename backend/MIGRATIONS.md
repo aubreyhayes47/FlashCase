@@ -293,3 +293,8 @@ For questions or issues with database migrations:
 - Create an issue in the GitHub repository
 - Contact the development team
 - Review existing migration examples in `alembic/versions/`
+
+---
+
+**Last Updated**: October 21, 2025  
+**Version**: 1.0
