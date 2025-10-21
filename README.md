@@ -48,25 +48,30 @@ Law school demands memorization of vast amounts of complex information—from ca
 ## Technology Stack
 
 ### Frontend
-- Modern web framework (React/Vue/Svelte)
-- Progressive Web App (PWA) capabilities
+- **Next.js 15** with App Router
+- **React 19** for UI components
+- **TypeScript** for type safety
+- **Tailwind CSS** for styling
 - Responsive design for all devices
 
 ### Backend
-- RESTful API architecture
-- Authentication and authorization
-- Database for user data and flashcards
-- Caching for performance
+- **FastAPI** (Python) for REST API
+- **SQLModel** ORM with SQLite database
+- **JWT** authentication with bcrypt
+- **Pydantic** for data validation
+- Rate limiting and request throttling
 
 ### AI/ML
-- Large Language Model integration for content generation
-- Natural language processing for text extraction
-- Machine learning for personalized SRS algorithm
+- **Grok AI** (xAI) integration via API
+- **CourtListener API** for legal case law
+- Automated content moderation (profanity filtering)
+- SM-2 spaced repetition algorithm
 
 ### Infrastructure
-- Cloud hosting for scalability
-- CDN for fast global access
-- Automated testing and deployment
+- **Docker** containers for both services
+- **Docker Compose** for local development
+- GitHub Actions for CI/CD
+- SQLite for development, PostgreSQL ready for production
 
 ## Architecture
 
@@ -153,35 +158,74 @@ The FastAPI backend provides automatic interactive API documentation:
 
 ### Key Endpoints
 
-- `GET /api/v1/health` - Health check
-- `GET /api/v1/decks` - List all decks
-- `POST /api/v1/decks` - Create a new deck
-- `GET /api/v1/cards` - List cards
-- `POST /api/v1/cards` - Create a new card
+**Authentication:**
+- `POST /api/v1/auth/register` - Create new user account
+- `POST /api/v1/auth/login` - Login and get JWT token
+- `GET /api/v1/auth/me` - Get current user info
+
+**Decks & Cards:**
+- `GET /api/v1/decks/` - List all decks
+- `POST /api/v1/decks/` - Create a new deck
+- `GET /api/v1/cards/` - List cards
+- `POST /api/v1/cards/` - Create a new card
+
+**Study System:**
+- `GET /api/v1/study/session/{deck_id}` - Get cards due for review
+- `POST /api/v1/study/review/{card_id}` - Submit review and update progress
+
+**AI Features:**
+- `POST /api/v1/ai/chat` - Chat with AI assistant
+- `POST /api/v1/ai/rewrite-card` - Improve flashcard quality
+- `POST /api/v1/ai/autocomplete-card` - Get AI suggestions
+
+**Moderation:**
+- `POST /api/v1/reports/` - Report inappropriate content
+- `GET /api/v1/reports/my-reports` - View your reports
 
 ## Features
 
-### Current (MVP - Phase 1)
+### ✅ Implemented Features
 
-- ✅ Frontend and backend repository separation
-- ✅ Next.js SPA with core pages (dashboard, discover, study, create)
-- ✅ FastAPI backend with main routers
-- ✅ SQLite database with SQLModel
-- ✅ Dependency injection for database sessions
-- ✅ Docker containers for both services
-- ✅ docker-compose for local development
-- ✅ JWT authentication with bcrypt password hashing
-- ✅ Automated content moderation (profanity filtering)
-- ✅ User reporting system for inappropriate content
-- ✅ Admin review and moderation tools
-- ✅ Legal and AI disclaimers on all relevant pages
+**Core Functionality:**
+- Next.js 15 frontend with TypeScript and Tailwind CSS
+- FastAPI backend with automatic OpenAPI documentation
+- SQLite database with SQLModel ORM
+- Docker containers and docker-compose orchestration
 
-### Planned
+**Authentication & Security:**
+- JWT-based authentication with secure password hashing
+- Protected API endpoints with user authorization
+- Automated content moderation (profanity filtering)
+- User reporting system for inappropriate content
+- Rate limiting on all API endpoints
 
-- 🔄 Spaced repetition algorithm (SRS) - In Progress
-- 🔄 Community deck sharing
-- 🔄 AI-powered card generation (Phase 3)
-- 🔄 Mobile apps (Phase 4)
+**Study System:**
+- SM-2 spaced repetition algorithm
+- Study sessions with due date tracking
+- Card review with quality ratings (0-5)
+- Progress tracking and statistics
+
+**AI-Powered Features:**
+- AI chat assistant with legal context
+- CourtListener case law integration
+- Flashcard rewriting and improvement
+- Autocomplete suggestions for card creation
+- Token usage tracking and cost controls
+
+**Content Management:**
+- Create, read, update, delete decks and cards
+- Public and private deck visibility
+- Card organization by deck
+- User-specific content ownership
+
+### 🔄 Planned Features
+
+- Enhanced admin moderation dashboard
+- Community deck discovery and sharing
+- Study statistics and analytics dashboard
+- Mobile-responsive UI improvements
+- Export/import deck functionality
+- Collaborative deck editing
 
 ## Testing
 
@@ -259,72 +303,103 @@ FlashCase supports deployment to multiple platforms. See [DEPLOYMENT.md](DEPLOYM
 
 ### Key Environment Variables
 
-For production deployment, configure:
+**Backend** (see `backend/.env.example` for full list):
 
 ```bash
-# Required
+# Authentication (Required)
 SECRET_KEY=<generate-strong-random-key>
-DATABASE_URL=<your-database-url>
-GROK_API_KEY=<your-xai-api-key>
-CORS_ORIGINS=["https://your-frontend-url.com"]
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=30
 
-# Recommended
+# Database
+DATABASE_URL=sqlite:///./flashcase.db  # Use PostgreSQL for production
+
+# AI Configuration (Optional - for AI features)
+GROK_API_KEY=<your-xai-api-key>
+GROK_MODEL=grok-4-fast
+COURTLISTENER_API_KEY=<your-courtlistener-key>
+
+# Security & Rate Limiting
+CORS_ORIGINS=["http://localhost:3000"]  # Update for production
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_PER_MINUTE=10
+
+# Monitoring
 ENVIRONMENT=production
 LOG_LEVEL=INFO
-RATE_LIMIT_ENABLED=true
 TOKEN_USAGE_TRACKING_ENABLED=true
+```
+
+**Frontend**:
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 ```
 
 ## Monitoring & Observability
 
-### AI Token Usage Monitoring
-
-FlashCase includes real-time AI token usage tracking:
-
-```bash
-# View current usage
-curl http://localhost:8000/api/v1/ai/usage
-
-# Monitor continuously
-cd backend
-python monitor_token_usage.py
-```
-
-### Structured Logging
-
-Production-ready JSON logging is configured automatically:
-
-- Development: Colored, human-readable logs
-- Production: JSON-formatted structured logs
-- Includes request tracking, AI metrics, and performance data
-
-See [MONITORING.md](MONITORING.md) for complete monitoring setup.
-
 ### Health Checks
 
-- Backend: `GET /api/v1/health`
-- AI Service: `GET /api/v1/ai/health`
-- Token Usage: `GET /api/v1/ai/usage`
+Monitor system health with these endpoints:
+
+```bash
+# Backend API health
+curl http://localhost:8000/api/v1/health
+
+# AI service health (checks Grok API availability)
+curl http://localhost:8000/api/v1/ai/health
+
+# AI token usage statistics
+curl http://localhost:8000/api/v1/ai/usage
+```
+
+### Logging
+
+Environment-aware logging is configured automatically:
+- **Development**: Colored, human-readable console logs
+- **Production**: JSON-formatted structured logs for parsing
+- Includes request IDs, user context, and performance metrics
+
+### AI Cost Monitoring
+
+Track AI API usage to control costs:
+- Real-time token usage tracking
+- Configurable alert thresholds
+- Per-endpoint token limits
+- Usage statistics via `/api/v1/ai/usage` endpoint
+
+For detailed monitoring setup, see [MONITORING.md](MONITORING.md).
 
 ## Contributing
 
 We welcome contributions from the community! Whether you're a developer, designer, law student, or educator, there are many ways to help make FlashCase better.
 
-*Contribution guidelines coming soon*
+Please read our [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Code of conduct and community guidelines
+- How to report bugs and suggest features
+- Development workflow and pull request process
+- Ways to contribute without coding (feedback, testing, content creation)
 
 ## License
 
 FlashCase is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for details.
 
+## Documentation
+
+- **[SETUP.md](SETUP.md)** - Detailed setup instructions
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guides
+- **[MONITORING.md](MONITORING.md)** - Monitoring and observability
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - How to contribute
+- **[API Documentation](backend/API_DOCUMENTATION.md)** - Complete API reference
+- **[Product Vision](PRODUCT_VISION.md)** - Product strategy and roadmap
+
 ## Support
 
-- **Documentation**: [Link to docs]
-- **Issues**: Report bugs and request features via GitHub Issues
-- **Community**: Join our Discord/Slack for discussions
-- **Contact**: [Contact information]
+- **Issues**: Report bugs and request features via [GitHub Issues](https://github.com/aubreyhayes47/FlashCase/issues)
+- **Documentation**: See the `/docs` directory and individual documentation files
+- **API Docs**: Interactive documentation at http://localhost:8000/docs
 
 ---
 
-**Note**: FlashCase is currently in early development. This README represents our product vision and planned features. We're actively seeking feedback from law students and legal educators to ensure we're building the right solution. If you're interested in beta testing or providing input, please reach out!
+**Status**: Active development - FlashCase is functional with core features implemented. We welcome contributions and feedback from the law student community!
 
-*Last updated: October 2025*
+*Last updated: October 21, 2025*

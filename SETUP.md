@@ -17,8 +17,10 @@ cd FlashCase
 
 2. **Start the services**:
 ```bash
-docker compose up --build
+docker-compose up --build
 ```
+
+   > **Note**: Use `docker compose` (without hyphen) if you have Docker Compose V2, or `docker-compose` for V1.
 
 3. **Access the application**:
    - Frontend: http://localhost:3000
@@ -209,11 +211,19 @@ The application uses SQLite for data persistence. The database file is created a
 
 ## Next Steps
 
-1. ✅ Set up authentication and user management
-2. ✅ Implement spaced repetition algorithm
-3. ✅ Add community deck features
-4. ✅ Integrate AI for card generation
-5. ✅ Deploy to production
+After setup is complete, you can:
+
+1. **Explore the API**: Visit http://localhost:8000/docs for interactive API documentation
+2. **Create an account**: Use the frontend at http://localhost:3000 or API to register
+3. **Create your first deck**: Start building flashcard collections
+4. **Try AI features**: Configure `GROK_API_KEY` in `.env` to enable AI-powered features
+5. **Study with SRS**: Use the study session endpoints to practice with spaced repetition
+
+## Learning More
+
+- See [API_DOCUMENTATION.md](backend/API_DOCUMENTATION.md) for complete API reference
+- Read [DEPLOYMENT.md](DEPLOYMENT.md) for production deployment options
+- Check [CONTRIBUTING.md](CONTRIBUTING.md) to learn how to contribute
 
 ## Support
 
