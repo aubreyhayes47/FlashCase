@@ -9,12 +9,13 @@ prevent stack trace exposure. Generic error messages are returned to users
 while detailed errors are logged for debugging.
 """
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request, Depends
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional
 from app.services.grok_service import GrokService
 from app.core.config import settings
+from app.middleware.rate_limit import limiter
 import json
 import logging
 
@@ -83,7 +84,9 @@ async def event_generator(generator):
 
 
 @router.post("/chat")
-async def chat(request: ChatRequest, http_request: Request):
+@limiter.limit(f"{settings.ai_rate_limit_per_minute}/minute")
+@limiter.limit(f"{settings.ai_rate_limit_per_hour}/hour")
+async def chat(request: Request, chat_request: ChatRequest):
     """
     Chat with Grok AI assistant with CourtListener integration.
     
@@ -104,7 +107,7 @@ async def chat(request: ChatRequest, http_request: Request):
         )
     
     # Convert Pydantic models to dicts
-    messages = [{"role": msg.role, "content": msg.content} for msg in request.messages]
+    messages = [{"role": msg.role, "content": msg.content} for msg in chat_request.messages]
     
     # Add system message if not present
     if not messages or messages[0]["role"] != "system":
@@ -116,12 +119,12 @@ async def chat(request: ChatRequest, http_request: Request):
     try:
         generator = grok_service.chat_completion(
             messages=messages,
-            stream=request.stream,
-            temperature=request.temperature,
-            max_tokens=request.max_tokens
+            stream=chat_request.stream,
+            temperature=chat_request.temperature,
+            max_tokens=chat_request.max_tokens
         )
         
-        if request.stream:
+        if chat_request.stream:
             return StreamingResponse(
                 event_generator(generator),
                 media_type="text/event-stream",
@@ -153,7 +156,9 @@ async def chat(request: ChatRequest, http_request: Request):
 
 
 @router.post("/rewrite-card")
-async def rewrite_card(request: RewriteCardRequest, http_request: Request):
+@limiter.limit(f"{settings.ai_rate_limit_per_minute}/minute")
+@limiter.limit(f"{settings.ai_rate_limit_per_hour}/hour")
+async def rewrite_card(request: Request, card_request: RewriteCardRequest):
     """
     Use AI to improve or rewrite a flashcard.
     
@@ -177,9 +182,9 @@ async def rewrite_card(request: RewriteCardRequest, http_request: Request):
     
     try:
         generator = grok_service.rewrite_card(
-            front=request.front,
-            back=request.back,
-            instruction=request.instruction
+            front=card_request.front,
+            back=card_request.back,
+            instruction=card_request.instruction
         )
         
         return StreamingResponse(
@@ -200,7 +205,9 @@ async def rewrite_card(request: RewriteCardRequest, http_request: Request):
 
 
 @router.post("/autocomplete-card")
-async def autocomplete_card(request: AutocompleteCardRequest, http_request: Request):
+@limiter.limit(f"{settings.ai_rate_limit_per_minute}/minute")
+@limiter.limit(f"{settings.ai_rate_limit_per_hour}/hour")
+async def autocomplete_card(request: Request, autocomplete_request: AutocompleteCardRequest):
     """
     Provide AI-powered autocomplete suggestions for card creation.
     
@@ -218,7 +225,7 @@ async def autocomplete_card(request: AutocompleteCardRequest, http_request: Requ
             detail="AI service not configured. Please set GROK_API_KEY."
         )
     
-    if request.card_type not in ["front", "back"]:
+    if autocomplete_request.card_type not in ["front", "back"]:
         raise HTTPException(
             status_code=400,
             detail="card_type must be either 'front' or 'back'"
@@ -226,8 +233,8 @@ async def autocomplete_card(request: AutocompleteCardRequest, http_request: Requ
     
     try:
         generator = grok_service.autocomplete_card(
-            partial_text=request.partial_text,
-            card_type=request.card_type
+            partial_text=autocomplete_request.partial_text,
+            card_type=autocomplete_request.card_type
         )
         
         return StreamingResponse(
@@ -259,5 +266,51 @@ async def ai_health_check():
         "grok_configured": bool(settings.grok_api_key),
         "courtlistener_configured": bool(settings.courtlistener_api_key),
         "model": settings.grok_model,
-        "rate_limiting_enabled": settings.rate_limit_enabled
+        "rate_limiting_enabled": settings.rate_limit_enabled,
+        "ai_rate_limits": {
+            "per_minute": settings.ai_rate_limit_per_minute,
+            "per_hour": settings.ai_rate_limit_per_hour
+        }
+    }
+
+
+@router.get("/usage")
+async def get_token_usage():
+    """
+    Get token usage statistics for monitoring and cost control.
+    
+    Returns current token usage metrics including:
+    - Total prompt tokens used
+    - Total completion tokens used
+    - Total tokens consumed
+    - Total number of requests made
+    - Alert threshold status
+    
+    This endpoint helps monitor AI costs and can be used for alerting
+    when usage exceeds configured thresholds.
+    """
+    if not settings.token_usage_tracking_enabled:
+        raise HTTPException(
+            status_code=503,
+            detail="Token usage tracking is not enabled"
+        )
+    
+    usage_stats = GrokService.get_token_usage_stats()
+    
+    # Check if usage exceeds alert threshold
+    alert_triggered = usage_stats["total_tokens"] >= settings.token_usage_alert_threshold
+    
+    return {
+        "usage": usage_stats,
+        "alert_threshold": settings.token_usage_alert_threshold,
+        "alert_triggered": alert_triggered,
+        "cost_control": {
+            "model": settings.grok_model,
+            "default_temperature": settings.grok_default_temperature,
+            "max_tokens": {
+                "chat": settings.grok_chat_max_tokens,
+                "rewrite": settings.grok_rewrite_max_tokens,
+                "autocomplete": settings.grok_autocomplete_max_tokens
+            }
+        }
     }
