@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: flashcase-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:///./flashcase.db
+      - CORS_ORIGINS=http://localhost:3000
+    volumes:
+      - ./backend:/app
+      - backend-data:/app/flashcase.db
+    networks:
+      - flashcase-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: flashcase-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - flashcase-network
+
+volumes:
+  backend-data:
+
+networks:
+  flashcase-network:
+    driver: bridge

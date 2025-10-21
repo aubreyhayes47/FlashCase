@@ -172,9 +172,138 @@ Law school demands memorization of vast amounts of complex information—from ca
 - CDN for fast global access
 - Automated testing and deployment
 
+## Architecture
+
+FlashCase follows a modern separation of concerns with:
+
+- **Frontend**: Next.js 15 with TypeScript and Tailwind CSS
+- **Backend**: FastAPI with Python 3.11
+- **Database**: SQLite with SQLModel ORM
+- **Deployment**: Docker and docker-compose for local parity
+
+### Repository Structure
+
+```
+FlashCase/
+├── frontend/           # Next.js frontend application
+│   ├── app/           # App router pages
+│   ├── public/        # Static assets
+│   └── Dockerfile     # Frontend container
+├── backend/           # FastAPI backend application
+│   ├── app/          # Application code
+│   │   ├── core/     # Config and database
+│   │   ├── models/   # SQLModel models
+│   │   └── routers/  # API endpoints
+│   └── Dockerfile    # Backend container
+├── docker-compose.yml # Orchestration for local development
+└── docs/             # Additional documentation
+```
+
 ## Getting Started
 
-*Coming soon: Installation and setup instructions*
+### Prerequisites
+
+- Docker and Docker Compose (recommended)
+- OR Node.js 20+ and Python 3.11+ for local development
+
+### Quick Start with Docker
+
+1. Clone the repository:
+```bash
+git clone https://github.com/aubreyhayes47/FlashCase.git
+cd FlashCase
+```
+
+2. Start both services:
+```bash
+docker-compose up --build
+```
+
+3. Access the application:
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8000
+   - API Docs: http://localhost:8000/docs
+
+### Local Development Setup
+
+#### Backend Setup
+
+```bash
+cd backend
+pip install -r requirements.txt
+cp .env.example .env
+uvicorn app.main:app --reload
+```
+
+The API will be available at http://localhost:8000
+
+#### Frontend Setup
+
+```bash
+cd frontend
+npm install
+cp .env.local.example .env.local
+npm run dev
+```
+
+The frontend will be available at http://localhost:3000
+
+## API Documentation
+
+The FastAPI backend provides automatic interactive API documentation:
+
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
+
+### Key Endpoints
+
+- `GET /api/v1/health` - Health check
+- `GET /api/v1/decks` - List all decks
+- `POST /api/v1/decks` - Create a new deck
+- `GET /api/v1/cards` - List cards
+- `POST /api/v1/cards` - Create a new card
+
+## Features
+
+### Current (MVP - Phase 1)
+
+- ✅ Frontend and backend repository separation
+- ✅ Next.js SPA with core pages (dashboard, discover, study, create)
+- ✅ FastAPI backend with main routers
+- ✅ SQLite database with SQLModel
+- ✅ Dependency injection for database sessions
+- ✅ Docker containers for both services
+- ✅ docker-compose for local development
+
+### Planned
+
+- 🔄 User authentication and authorization
+- 🔄 Spaced repetition algorithm (SRS)
+- 🔄 Community deck sharing
+- 🔄 AI-powered card generation (Phase 3)
+- 🔄 Mobile apps (Phase 4)
+
+## Testing
+
+### Backend Tests
+
+```bash
+cd backend
+pytest
+```
+
+### Frontend Tests
+
+```bash
+cd frontend
+npm test
+```
+
+## Deployment
+
+Both services are containerized and can be deployed to any container orchestration platform (Kubernetes, ECS, etc.) or PaaS (Heroku, Railway, Vercel + separate API hosting).
+
+The docker-compose configuration provides local development parity with production.
 
 ## Contributing
 
