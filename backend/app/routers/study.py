@@ -7,8 +7,10 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from app.core.database import get_session
+from app.core.auth import get_current_active_user
 from app.models.card import Card
 from app.models.study_log import StudyLog
+from app.models.user import User
 from app.services.srs import calculate_sm2, calculate_due_date
 
 router = APIRouter(prefix="/study", tags=["study"])
@@ -31,7 +33,6 @@ class CardWithStudyInfo(BaseModel):
 
 class ReviewRequest(BaseModel):
     """Request body for reviewing a card."""
-    user_id: int
     quality: int  # 0-5 rating
 
 
@@ -48,18 +49,18 @@ class ReviewResponse(BaseModel):
 @router.get("/session/{deck_id}", response_model=List[CardWithStudyInfo])
 async def get_study_session(
     deck_id: int,
-    user_id: int,
     limit: int = 20,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Get cards due for review in a specific deck for a user.
     
     Args:
         deck_id: The deck ID to get cards from
-        user_id: The user ID to get cards for
         limit: Maximum number of cards to return (default 20)
         session: Database session
+        current_user: Currently authenticated user
         
     Returns:
         List of cards with their study information, ordered by due date
@@ -87,7 +88,7 @@ async def get_study_session(
         study_log_stmt = (
             select(StudyLog)
             .where(StudyLog.card_id == card.id)
-            .where(StudyLog.user_id == user_id)
+            .where(StudyLog.user_id == current_user.id)
             .order_by(StudyLog.reviewed_at.desc())
         )
         study_log = session.exec(study_log_stmt).first()
@@ -128,15 +129,17 @@ async def get_study_session(
 async def review_card(
     card_id: int,
     review: ReviewRequest,
-    session: Session = Depends(get_session)
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_active_user)
 ):
     """
     Submit a review for a card and update the study log using SM-2 algorithm.
     
     Args:
         card_id: The card ID being reviewed
-        review: Review request containing user_id and quality rating (0-5)
+        review: Review request containing quality rating (0-5)
         session: Database session
+        current_user: Currently authenticated user
         
     Returns:
         ReviewResponse with updated study parameters
@@ -164,7 +167,7 @@ async def review_card(
     study_log_stmt = (
         select(StudyLog)
         .where(StudyLog.card_id == card_id)
-        .where(StudyLog.user_id == review.user_id)
+        .where(StudyLog.user_id == current_user.id)
         .order_by(StudyLog.reviewed_at.desc())
     )
     previous_log = session.exec(study_log_stmt).first()
@@ -194,7 +197,7 @@ async def review_card(
     # Create new study log entry
     now = datetime.utcnow()
     new_study_log = StudyLog(
-        user_id=review.user_id,
+        user_id=current_user.id,
         card_id=card_id,
         reviewed_at=now,
         ease_factor=new_ease_factor,

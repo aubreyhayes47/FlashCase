@@ -29,6 +29,11 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = 10
     rate_limit_per_hour: int = 100
     
+    # Authentication
+    secret_key: str = "your-secret-key-change-in-production"
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+    
     class Config:
         env_file = ".env"
         case_sensitive = False
