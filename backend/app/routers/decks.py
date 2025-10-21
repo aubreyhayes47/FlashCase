@@ -13,6 +13,10 @@ router = APIRouter(prefix="/decks", tags=["decks"])
 
 @router.get("/", response_model=List[DeckResponse])
 async def list_decks(
+    school: str = None,
+    course: str = None,
+    professor: str = None,
+    year: int = None,
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_active_user)
 ):
@@ -20,8 +24,20 @@ async def list_decks(
     List all decks accessible to the current user.
     
     Returns both user's own decks and public decks.
+    Supports filtering by school, course, professor, and year.
     """
     statement = select(Deck)
+    
+    # Apply filters if provided
+    if school:
+        statement = statement.where(Deck.school == school)
+    if course:
+        statement = statement.where(Deck.course == course)
+    if professor:
+        statement = statement.where(Deck.professor == professor)
+    if year:
+        statement = statement.where(Deck.year == year)
+    
     decks = session.exec(statement).all()
     return decks
 
@@ -49,7 +65,11 @@ async def create_deck(
     deck = Deck(
         name=deck_data.name,
         description=deck_data.description,
-        is_public=deck_data.is_public
+        is_public=deck_data.is_public,
+        school=deck_data.school,
+        course=deck_data.course,
+        professor=deck_data.professor,
+        year=deck_data.year
     )
     session.add(deck)
     session.commit()
@@ -76,6 +96,14 @@ async def update_deck(
         deck.description = deck_data.description
     if deck_data.is_public is not None:
         deck.is_public = deck_data.is_public
+    if deck_data.school is not None:
+        deck.school = deck_data.school
+    if deck_data.course is not None:
+        deck.course = deck_data.course
+    if deck_data.professor is not None:
+        deck.professor = deck_data.professor
+    if deck_data.year is not None:
+        deck.year = deck_data.year
     
     deck.updated_at = datetime.utcnow()
     session.add(deck)
