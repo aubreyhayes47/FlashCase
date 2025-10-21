@@ -64,6 +64,56 @@ frontend/
 └── package.json        # Dependencies
 ```
 
-## API Integration
+## Technology Stack
 
-The frontend is configured to connect to the backend API at `http://localhost:8000/api/v1` by default. Update `NEXT_PUBLIC_API_URL` in `.env.local` to change this.
+- **Next.js 15** with App Router and Turbopack
+- **React 19** for UI components
+- **TypeScript 5** for type safety
+- **Tailwind CSS 4** for styling
+
+## Environment Variables
+
+Create a `.env.local` file (see `.env.local.example`):
+
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+```
+
+For production, update the API URL to your deployed backend.
+
+## Available Scripts
+
+- `npm run dev` - Start development server with Turbopack
+- `npm run build` - Build for production with Turbopack
+- `npm start` - Start production server
+
+## Development
+
+### Adding New Pages
+
+Create a new directory under `app/` with a `page.tsx` file for new routes.
+
+### Styling
+
+Uses Tailwind CSS utility classes for styling. Global styles are in `app/globals.css`.
+
+## Troubleshooting
+
+**Port Already in Use:**
+```bash
+PORT=3001 npm run dev
+```
+
+**Module Errors:**
+```bash
+rm -rf node_modules .next
+npm install
+```
+
+## Contributing
+
+See [../CONTRIBUTING.md](../CONTRIBUTING.md) for contribution guidelines.
+
+---
+
+**Last Updated**: October 21, 2025

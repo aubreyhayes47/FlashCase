@@ -1,5 +1,7 @@
 # Security Summary - AI Integration
 
+> **Note**: For comprehensive security documentation, see [../docs/SECURITY.md](../docs/SECURITY.md)
+
 ## Overview
 
 This document summarizes the security analysis and measures implemented for the AI Legal Assistant integration.

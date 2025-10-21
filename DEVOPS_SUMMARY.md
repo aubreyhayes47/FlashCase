@@ -1,5 +1,9 @@
 # DevOps & Infrastructure Summary
 
+> **See Also**: 
+> - [DEPLOYMENT.md](DEPLOYMENT.md) - Detailed deployment guides for various platforms
+> - [MONITORING.md](MONITORING.md) - Monitoring and observability setup
+
 ## Overview
 
 This document provides a summary of the deployment, CI/CD, monitoring, and cost tracking infrastructure implemented for FlashCase.
