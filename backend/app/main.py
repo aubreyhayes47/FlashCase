@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import create_db_and_tables
-from app.routers import decks, cards, health, ai, study, auth
+from app.routers import decks, cards, health, ai, study, auth, reports
 from app.middleware import setup_rate_limiting
 
 app = FastAPI(title=settings.project_name)
@@ -26,6 +26,7 @@ app.include_router(decks.router, prefix=settings.api_v1_prefix)
 app.include_router(cards.router, prefix=settings.api_v1_prefix)
 app.include_router(study.router, prefix=settings.api_v1_prefix)
 app.include_router(ai.router, prefix=settings.api_v1_prefix)
+app.include_router(reports.router, prefix=settings.api_v1_prefix)
 
 
 @app.on_event("startup")
