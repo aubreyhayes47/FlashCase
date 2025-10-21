@@ -1,5 +1,7 @@
 # Core SRS Engine Implementation - Summary
 
+> **Note**: For a comprehensive overview of all FlashCase implementations, see [../docs/IMPLEMENTATION.md](../docs/IMPLEMENTATION.md)
+
 ## Overview
 Successfully implemented a robust Spaced Repetition System (SRS) based on the SM-2 algorithm with Anki improvements for the FlashCase application.
 

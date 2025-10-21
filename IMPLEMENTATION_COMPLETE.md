@@ -1,5 +1,9 @@
 # Security, Moderation & Legal Disclaimers - Implementation Complete ✅
 
+> **Note**: For comprehensive implementation and security documentation, see:
+> - [docs/IMPLEMENTATION.md](docs/IMPLEMENTATION.md) - Complete implementation details
+> - [docs/SECURITY.md](docs/SECURITY.md) - Security features and best practices
+
 ## Date: October 21, 2025
 
 ## Overview
