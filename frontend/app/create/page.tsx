@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import LegalDisclaimer from "../../components/LegalDisclaimer";
+import AIDisclaimer from "../../components/AIDisclaimer";
 
 export default function Create() {
   const [front, setFront] = useState("");
@@ -106,6 +108,9 @@ export default function Create() {
 
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold mb-8">Create Flashcards</h1>
+
+        <LegalDisclaimer />
+        <AIDisclaimer />
 
         <div className="grid md:grid-cols-2 gap-8">
           {/* Manual Creation with AI Assist */}
