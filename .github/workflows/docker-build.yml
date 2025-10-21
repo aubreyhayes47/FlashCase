@@ -19,6 +19,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     strategy:
       matrix:
@@ -49,6 +51,8 @@ jobs:
   test-compose:
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      contents: read
     
     steps:
     - name: Checkout code
