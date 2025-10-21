@@ -274,11 +274,15 @@ The FastAPI backend provides automatic interactive API documentation:
 - ✅ Dependency injection for database sessions
 - ✅ Docker containers for both services
 - ✅ docker-compose for local development
+- ✅ JWT authentication with bcrypt password hashing
+- ✅ Automated content moderation (profanity filtering)
+- ✅ User reporting system for inappropriate content
+- ✅ Admin review and moderation tools
+- ✅ Legal and AI disclaimers on all relevant pages
 
 ### Planned
 
-- 🔄 User authentication and authorization
-- 🔄 Spaced repetition algorithm (SRS)
+- 🔄 Spaced repetition algorithm (SRS) - In Progress
 - 🔄 Community deck sharing
 - 🔄 AI-powered card generation (Phase 3)
 - 🔄 Mobile apps (Phase 4)

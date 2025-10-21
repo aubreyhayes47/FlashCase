@@ -79,7 +79,17 @@ export default function Discover() {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold mb-8">Discover Decks</h1>
+        <h1 className="text-4xl font-bold mb-4">Discover Decks</h1>
+        
+        {/* Legal Disclaimer */}
+        <div className="mb-8">
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 text-sm">
+            <p className="text-yellow-800">
+              <strong>⚖️ Not Legal Advice:</strong> Community-created content is for educational purposes only and does not constitute legal advice. 
+              Verify all information with authoritative sources.
+            </p>
+          </div>
+        </div>
 
         <LegalDisclaimer />
 

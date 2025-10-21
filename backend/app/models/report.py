@@ -1,4 +1,4 @@
-"""Report model for user content reporting."""
+"""Report model for content moderation."""
 
 from sqlmodel import SQLModel, Field
 from typing import Optional
@@ -10,12 +10,22 @@ class ReportType(str, Enum):
     """Types of content that can be reported."""
     DECK = "deck"
     CARD = "card"
+
+
+class ReportReason(str, Enum):
+    """Reasons for reporting content."""
+    INAPPROPRIATE = "inappropriate"
+    SPAM = "spam"
+    COPYRIGHT = "copyright"
+    MISLEADING = "misleading"
+    OTHER = "other"
     USER = "user"
 
 
 class ReportStatus(str, Enum):
     """Status of a report."""
     PENDING = "pending"
+    REVIEWED = "reviewed"
     UNDER_REVIEW = "under_review"
     RESOLVED = "resolved"
     DISMISSED = "dismissed"

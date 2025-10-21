@@ -11,5 +11,6 @@ class User(SQLModel, table=True):
     username: str = Field(unique=True, index=True)
     hashed_password: str
     is_active: bool = Field(default=True)
+    is_admin: bool = Field(default=False)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)

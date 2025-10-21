@@ -57,7 +57,7 @@ async def create_card(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Create a new card in a deck.
+    Create a new card in a deck with content moderation.
     
     Content is automatically checked for profanity and inappropriate language.
     
@@ -108,7 +108,7 @@ async def update_card(
     current_user: User = Depends(get_current_active_user)
 ):
     """
-    Update an existing card.
+    Update an existing card with content moderation.
     
     Content is automatically checked for profanity and inappropriate language.
     

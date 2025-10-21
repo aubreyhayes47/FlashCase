@@ -1,5 +1,12 @@
 from sqlmodel import create_engine, SQLModel, Session
 from app.core.config import settings
+# Import models to ensure they are registered with SQLModel
+from app.models.user import User
+from app.models.deck import Deck
+from app.models.card import Card
+from app.models.report import Report
+from app.models.study_log import StudyLog
+from app.models.user_deck import UserDeck
 
 
 # Create engine
