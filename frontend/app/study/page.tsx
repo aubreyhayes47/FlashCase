@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import LegalDisclaimer from "../../components/LegalDisclaimer";
 
 interface Card {
   id: number;
@@ -108,6 +109,7 @@ export default function Study() {
         </div>
 
         <div className="max-w-2xl mx-auto">
+          <LegalDisclaimer />
           {/* Card Display Area */}
           <div className="border rounded-lg p-12 mb-6 min-h-[400px] flex items-center justify-center bg-white shadow-lg">
             {currentCard ? (

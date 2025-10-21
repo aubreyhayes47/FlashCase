@@ -8,7 +8,7 @@ from app.models.card import Card
 from app.models.deck import Deck
 from app.models.user import User
 from app.schemas.card import CardCreate, CardUpdate, CardResponse
-from app.services.content_moderation import validate_card_content
+from app.services.moderation import check_card_content
 
 router = APIRouter(prefix="/cards", tags=["cards"])
 
@@ -59,6 +59,8 @@ async def create_card(
     """
     Create a new card in a deck with content moderation.
     
+    Content is automatically checked for profanity and inappropriate language.
+    
     Args:
         card_data: Card creation data (deck_id, front, back)
         session: Database session
@@ -79,12 +81,12 @@ async def create_card(
             detail="Deck not found"
         )
     
-    # Validate content for inappropriate language
-    is_valid, error_message = validate_card_content(card_data.front, card_data.back)
-    if not is_valid:
+    # Check content for profanity
+    is_clean, message = check_card_content(card_data.front, card_data.back)
+    if not is_clean:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error_message
+            detail=message
         )
     
     card = Card(
@@ -108,6 +110,8 @@ async def update_card(
     """
     Update an existing card with content moderation.
     
+    Content is automatically checked for profanity and inappropriate language.
+    
     Args:
         card_id: Card ID to update
         card_data: Card update data (front and/or back)
@@ -125,17 +129,16 @@ async def update_card(
     if not card:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Card not found")
     
-    # Build updated values for validation
-    updated_front = card_data.front if card_data.front is not None else card.front
-    updated_back = card_data.back if card_data.back is not None else card.back
-    
-    # Validate content for inappropriate language
-    is_valid, error_message = validate_card_content(updated_front, updated_back)
-    if not is_valid:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=error_message
-        )
+    # Check content for profanity if front or back is being updated
+    if card_data.front is not None or card_data.back is not None:
+        front_to_check = card_data.front if card_data.front is not None else card.front
+        back_to_check = card_data.back if card_data.back is not None else card.back
+        is_clean, message = check_card_content(front_to_check, back_to_check)
+        if not is_clean:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=message
+            )
     
     # Update only provided fields
     if card_data.front is not None:

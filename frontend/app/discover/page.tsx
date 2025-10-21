@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import LegalDisclaimer from "../../components/LegalDisclaimer";
 
 interface Deck {
   id: number;
@@ -89,6 +90,8 @@ export default function Discover() {
             </p>
           </div>
         </div>
+
+        <LegalDisclaimer />
 
         {/* Search Bar */}
         <div className="mb-8">
